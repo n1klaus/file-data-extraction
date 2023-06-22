@@ -2,7 +2,7 @@
 
 from flask import Flask, render_template, request, Request, Response, redirect, url_for
 from models.upload_form import UploadForm
-from utils.extract import extract_data
+from utils.processor import extract_data
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import os
