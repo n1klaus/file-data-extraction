@@ -1,0 +1,9 @@
+filetype==1.2.0
+Flask==2.3.2
+Flask-WTF==1.1.1
+fonttools==4.40.0
+Pillow==9.5.0
+PyMuPDF==1.22.5
+python-dotenv==1.0.0
+uWSGI==2.0.21
+WTForms==3.0.1
