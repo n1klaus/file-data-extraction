@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block head_content %}
+    <title>Upload File</title>
+{% endblock %}
+
+{% block body_content %}
+    <h1 class="text-2xl font-bold mb-4">Upload Files</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+        {{ form.upload.label }}<br>
+        {{ form.upload(class="mt-2") }}<br>
+        {% if form.upload.errors %}
+            {{ form.upload.errors }}<br>
+        {% endif %}
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4" type="submit">
+            Upload
+        </button>
+    </form>
+{% endblock %}
