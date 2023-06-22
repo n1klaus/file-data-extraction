@@ -28,3 +28,4 @@ bld/
 [Ll]ogs/
 .venv
 sample.pdf
+.env
