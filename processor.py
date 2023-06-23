@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-"""Modules for utility functions"""
+"""Modules for operating on different file types"""
 
 import fitz
 import os
@@ -8,6 +8,8 @@ import subprocess
 import pytesseract
 from PIL import Image
 from pprint import pprint
+from models.data_file import DataFile
+import csv
 
 # If you don't have tesseract executable in your PATH, include the following:
 pytesseract.pytesseract.tesseract_cmd = os.path.realpath('/usr/bin/tesseract')
@@ -21,35 +23,29 @@ KEYWORDS = {
 }
 
 
-def merge_files(file1_name: str, file2_name: str) -> str:
+def merge_files(file1: DataFile, file2: DataFile) -> DataFile:
     """Merges two files and saves the resulting merged file"""
-    file1 = fitz.open(file1_name)
-    file2 = fitz.open(file2_name)
+    _file1 = fitz.open(file1.path)
+    _file2 = fitz.open(file2.path)
     # Merge the two files
-    file1.insert_file(file2)
+    _file1.insert_file(_file2)
     # Save the merged file with a new filename
-    merged_file: str = f'merged_{file1_name}_{file2_name}.pdf'
-    file1.save(merged_file)
-    return merged_file
+    merged_file_name: str = f'merged_{file1.name}_{file2.name}.pdf'
+    merged_file_path: str = os.path.join(
+        os.path.dirname(file1), merged_file_name)
+    _file1.save(merged_file_path)
+    return DataFile(merged_file_name, 'pdf', merged_file_path)
 
 
-def extract_data(files: list) -> list:
+def extract_data(data_file: DataFile) -> list:
     """Extracts data from a list of files and returns key/value pairs of the data"""
-    result_data: dict = {}
-    for file in files:
-        file_name, file_type, full_path = file
-        # Convert to image for OCR processing
-        if file_type == 'pdf':
-            file = convert_to_image_ocr(file)
-        text_data: list = get_data_from_image_ocr(file)
-        # Extract key/value pairs using predefined keywords
-        extract = get_key_values_from_data(text_data)
-        # Update the dictionary data
-        if extract:
-            result_data.update(extract)
-
-    # pprint(result_data)
-    return result_data
+    # Convert to image for OCR processing
+    if data_file.type == 'pdf':
+        data_file = convert_to_image_ocr(data_file)
+    text_data: list = get_data_from_image_ocr(data_file)
+    # Extract key/value pairs using predefined keywords
+    extract: dict = get_key_values_from_data(text_data)
+    return extract
 
 
 def get_key_values_from_data(words: list, keywords: set = KEYWORDS) -> dict:
@@ -62,15 +58,13 @@ def get_key_values_from_data(words: list, keywords: set = KEYWORDS) -> dict:
             # Extract the value
             value = words[index + 1]
             result_data[key] = value
-    # pprint(result_data)
     return result_data
 
 
-def convert_to_pdf_ocr(pdf_file):
+def convert_to_pdf_ocr(pdf_file: DataFile) -> list:
     """Convert file to pdf ocr format"""
     data_results: list = []
-    file_name, file_type, file_path = pdf_file
-    pdf = os.path.realpath(file_path)
+    pdf = os.path.realpath(pdf_file.path)
     document = fitz.open(pdf)
     for page in document:
         text_results = get_pdf_ocr_content(page)
@@ -78,11 +72,10 @@ def convert_to_pdf_ocr(pdf_file):
     return data_results
 
 
-def convert_to_image_ocr(file, block_box=[0, 0, 500, 700]):
+def convert_to_image_ocr(file: DataFile, block_box=[
+                         0, 0, 500, 700]) -> DataFile:
     """Convert file to image ocr format"""
-    file_name, file_type, full_path = file
-
-    document = fitz.open(full_path)
+    document = fitz.open(file.path)
     page = document[0]
     mat = fitz.Matrix(5, 5)  # high resolution matrix
     pix = page.get_pixmap(
@@ -95,17 +88,15 @@ def convert_to_image_ocr(file, block_box=[0, 0, 500, 700]):
     output = fitz.open()
     img = fitz.open('png', img_bytes)  # output Image
     output.insert_file(img)  # append the image page to output
-    output_name = f"{file_name.split('.')[0]}.png"
-    output_path = os.path.join(os.path.dirname(full_path), output_name)
-    output.ez_save(output_name)  # save output
-    return (output_name, 'png', output_path)
+    output_path = os.path.join(os.path.dirname(file.path), f"{file.name}.png")
+    output.ez_save(output_path)  # save output
+    return DataFile(file.name, 'png', output_path)
 
 
-def convert_image_to_pdf_ocr(image_file):
+def convert_image_to_pdf_ocr(image_file: DataFile):
     """Converts normal image to pdf ocr"""
     document = fitz.open()  # output PDF
-    img_name, img_type, img_path = image_file
-    image = os.path.realpath(img_path)
+    image = os.path.realpath(image_file.path)
     pix = fitz.Pixmap(image)  # make a pixmap form the image file
     # 1-page PDF with the OCRed image
     pdfbytes = pix.pdfocr_tobytes(language="eng")
@@ -115,7 +106,7 @@ def convert_image_to_pdf_ocr(image_file):
     return document
 
 
-def get_pdf_ocr_content(page, block_box=[0, 0, 500, 700]):
+def get_pdf_ocr_content(page, block_box=[0, 0, 500, 700]) -> str:
     """Return OCR-ed span text using Tesseract.
 
     Args:
@@ -127,8 +118,8 @@ def get_pdf_ocr_content(page, block_box=[0, 0, 500, 700]):
     mat = fitz.Matrix(5, 5)  # high resolution matrix
     pix = page.get_pixmap(
         colorspace=fitz.csGRAY,  # we need no color
-        # matrix=mat,
-        # clip=block_box,
+        matrix=mat,
+        clip=block_box,
     )
     ocrpdf = fitz.open("pdf", pix.pdfocr_tobytes())
     ocrpage = ocrpdf[0]
@@ -138,7 +129,7 @@ def get_pdf_ocr_content(page, block_box=[0, 0, 500, 700]):
     return text
 
 
-def get_image_ocr_content(page, block_box=[0, 0, 500, 700]):
+def get_image_ocr_content(page, block_box=[0, 0, 500, 700]) -> str:
     """Return OCR-ed span text using Tesseract.
 
     Args:
@@ -171,10 +162,33 @@ def get_image_ocr_content(page, block_box=[0, 0, 500, 700]):
     return text
 
 
-def get_data_from_image_ocr(file) -> list:
+def get_data_from_image_ocr(file: DataFile) -> list:
     """Use pytesseract to get image ocr data"""
-    file_name, file_type, file_path = file
-    image = Image.open(file_path)
+    image = Image.open(file.path)
     result_data = pytesseract.image_to_data(
         image, lang='eng', nice=0, output_type=pytesseract.Output.DICT)
     return result_data.get('text', [])
+
+
+def write_data_to_csv(data: dict, file: DataFile) -> DataFile:
+    """Writes data into a csv file"""
+    csv_file_name = f"{file.name}.csv"
+    csv_file_path = os.path.join(os.path.dirname(file.path), csv_file_name)
+    with open(csv_file_path, mode='w', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Extracted File Data'])
+        [writer.writerow(data_extract) for data_extract in data.items()]
+    return DataFile(file.name, 'csv', csv_file_path)
+
+
+def read_csv_data(csv_file: DataFile) -> list:
+    """Reads and returns csv file data contents"""
+    result_data: dict = {}
+    with open(csv_file.path, 'r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        for index, row in enumerate(reader):
+            if index == 0:
+                result_data.update({row[0]: ''})
+            else:
+                result_data.update({row[0]: row[1]})
+    return result_data
