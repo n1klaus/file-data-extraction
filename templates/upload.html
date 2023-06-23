@@ -8,7 +8,6 @@
     <h1 class="text-2xl font-bold mb-4">Upload Files</h1>
     <form method="POST" enctype="multipart/form-data">
         {{ form.csrf_token }}
-        {{ form.upload.label }}<br>
         {{ form.upload(class="mt-2") }}<br>
         {% if form.upload.errors %}
             {{ form.upload.errors }}<br>

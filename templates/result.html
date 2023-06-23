@@ -5,14 +5,26 @@
 {% endblock %}
 
 {% block body_content %}
-    <h1 class="text-2xl font-bold mb-4">Results</h1>
-    <ul>
-        {% if files %}
-            {% for filename in files %}
-                <li>{{ filename }}</li>
-            {% endfor %}
-        {% else %}
-            <p>No files!</p>
-        {% endif %}
-    </ul>
+    <h1 class="text-3xl font-bold mb-4">Key-Value Data Results</h1>
+    {% if data %}
+        <table class="min-w-full bg-white border border-gray-300">
+            <thead>
+                <tr>
+                    <th class="py-3 px-4 border-b border-gray-300 font-bold">Key</th>
+                    <th class="py-3 px-4 border-b border-gray-300 font-bold">Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, value in data.items() %}
+                <tr>
+                    <td class="py-3 px-4 border-b border-gray-300">{{ key }}</td>
+                    <td class="py-3 px-4 border-b border-gray-300">{{ value }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data found!</p>
+    {% endif %}
+
 {% endblock %}
