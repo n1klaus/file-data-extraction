@@ -29,3 +29,4 @@ bld/
 .venv
 sample.pdf
 .env
+docs/output/
