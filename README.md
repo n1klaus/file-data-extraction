@@ -116,6 +116,9 @@ pip install --upgrade pip
 
 # Install the python packages
 pip install -r requirements.txt
+
+# Running the app
+python3 app.py
 ```
 
 # Challenges
@@ -123,3 +126,17 @@ pip install -r requirements.txt
 ```
 ImportError: cannot import name 'secure_filename' from 'werkzeug' 
 ```
+Solution: Decided to use file type extensions instead of trying another module like flask-Reuploaded
+
+- OCR conversion
+```
+Couldn't get PymuPDF to utilize the tesseract OCR engine and fell short in handling documents that required OCR
+```
+Solution: imported pytesseract which wraps around the tesseract engine to handle OCR file processing
+
+# Screenshots
+![](./content/Screenshot_2.png)
+![](./content/Screenshot_1.png)
+
+# Video
+<video src='./content/Video_1.mp4' width=180 />
